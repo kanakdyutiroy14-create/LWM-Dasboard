@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Slotting Command Center – Warehouse Intelligence Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fonts & Libraries -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-alt: #020617;
+      --glass: rgba(15, 23, 42, 0.92);
+      --glass-soft: rgba(15, 23, 42, 0.88);
+      --border: rgba(148, 163, 184, 0.5);
+      --border-strong: rgba(56, 189, 248, 0.7);
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --accent-soft: rgba(56, 189, 248, 0.18);
+      --accent-soft-2: rgba(94, 234, 212, 0.18);
+      --danger: #fb7185;
+      --success: #22c55e;
+      --warn: #fbbf24;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --shadow-heavy: 0 30px 70px rgba(15, 23, 42, 0.9);
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-pill: 999px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, #0f172a 0, transparent 55%),
+        radial-gradient(circle at 90% 10%, #1d283a 0, transparent 55%),
+        radial-gradient(circle at 50% 120%, #020617 0, #020617 60%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 20px auto 32px;
+      padding: 0 16px 32px;
+    }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 950px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hero-main {
+      position: relative;
+      border-radius: 26px;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), rgba(15, 23, 42, 0.98));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-heavy);
+      padding: 18px 20px 18px;
+      overflow: hidden;
+    }
+
+    .hero-main::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.35), transparent 55%),
+        radial-gradient(circle at 95% 80%, rgba(59, 130, 246, 0.28), transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .title-group h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .title-sub {
+      margin-top: 6px;
+      font-size: 0.86rem;
+      max-width: 480px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      border-radius: var(--radius-pill);
+      padding: 4px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+    }
+
+    .pill span.dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.88);
+      color: #e5e7eb;
+    }
+
+    .badge-accent {
+      border-color: rgba(56, 189, 248, 0.9);
+      background: rgba(8, 47, 73, 0.92);
+      color: #e0f2fe;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+      font-size: 0.78rem;
+    }
+
+    .hero-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(8, 47, 73, 0.95));
+      color: var(--text);
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn.secondary {
+      border-color: var(--border);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label {
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px dashed var(--border);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-line {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .hero-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 0.72rem;
+    }
+
+    .hero-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+    }
+
+    .hero-step span.step-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--accent);
+    }
+
+    /* Small visual picture card */
+    .hero-visual {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 10px;
+    }
+
+    .hero-visual img {
+      width: 90px;
+      height: 70px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    .hero-visual-text {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .hero-visual-text span {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    /* INSIGHTS PANEL */
+    .hero-side {
+      border-radius: 26px;
+      background: radial-gradient(circle at top right, rgba(94, 234, 212, 0.18), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(94, 234, 212, 0.4);
+      box-shadow: var(--shadow-heavy);
+      padding: 14px 16px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-side::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.3), transparent 55%),
+        radial-gradient(circle at 110% 80%, rgba(56, 189, 248, 0.25), transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hero-side-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-side-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .hero-side-main {
+      font-size: 0.98rem;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .insights-list {
+      margin: 8px 0 0;
+      padding-left: 16px;
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+
+    .insights-list li {
+      margin-bottom: 4px;
+    }
+
+    .insight-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      margin-top: 6px;
+    }
+
+    .hero-side-footer {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* KPI Row */
+    .grid-kpi {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 1040px) {
+      .grid-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .grid-kpi { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--glass-soft);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+      padding: 10px 12px 12px;
+    }
+
+    .card-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .card-value {
+      font-size: 1.24rem;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .card-sub {
+      margin-top: 4px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .card-badge {
+      margin-top: 6px;
+      font-size: 0.7rem;
+      color: var(--success);
+    }
+
+    .card-badge.bad {
+      color: var(--danger);
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-golden { background: #facc15; }
+    .dot-standard { background: #38bdf8; }
+    .dot-overflow { background: #6b7280; }
+
+    /* Main layout sections */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 2.2fr 1.8fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .grid-bottom {
+      display: grid;
+      grid-template-columns: 1.8fr 2.2fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-main,
+      .grid-bottom { grid-template-columns: 1fr; }
+    }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .card-title-text {
+      font-size: 0.86rem;
+      font-weight: 500;
+    }
+
+    .card-title-sub {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .chip {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-muted);
+    }
+
+    .chart-wrapper {
+      margin-top: 6px;
+      height: 250px;
+    }
+
+    .chart-wrapper-sm {
+      margin-top: 6px;
+      height: 210px;
+    }
+
+    .footnote {
+      margin-top: 5px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Radar section */
+    .radar-section {
+      margin-top: 16px;
+    }
+
+    .radar-wrapper {
+      margin-top: 6px;
+      height: 260px;
+    }
+
+    /* Controls & table */
+    .filter-row {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.75rem;
+      align-items: center;
+    }
+
+    select {
+      padding: 4px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 0.74rem;
+    }
+
+    .btn-ghost {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: rgba(8, 47, 73, 0.9);
+      color: #e0f2fe;
+      font-size: 0.74rem;
+      cursor: pointer;
+    }
+
+    .table-container {
+      margin-top: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: auto;
+      max-height: 240px;
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+    }
+
+    th, td {
+      padding: 5px 8px;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    tr.highlight {
+      background: rgba(248, 250, 252, 0.07);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      font-size: 0.68rem;
+    }
+
+    .tag-high {
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #bbf7d0;
+    }
+    .tag-med {
+      border-color: rgba(234, 179, 8, 0.85);
+      color: #facc15;
+    }
+    .tag-low {
+      border-color: rgba(148, 163, 184, 0.9);
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-main">
+      <div class="hero-content">
+        <div class="hero-title-row">
+          <div class="title-group">
+            <h1>AI Slotting Command Center</h1>
+            <p class="title-sub">
+              Interactive cockpit to analyse how AI-driven priorities translate into warehouse slotting decisions
+              across Golden, Standard, and Overflow zones.
+            </p>
+            <div class="hero-badges">
+              <span class="badge-accent">Logistics & Warehouse Management</span>
+              <span class="badge">AI Priority Engine</span>
+              <span class="badge">Optimisation-based Slot Allocation</span>
+              <span class="badge">Managerial Decision Support</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <div class="pill">
+              <span class="dot"></span>
+              Live Scenario View
+            </div>
+            <div class="hero-btn-row">
+              <button id="btnDemo" class="btn">
+                ⚡ Load Demo Scenario
+              </button>
+              <label class="file-label">
+                📦 Upload slot_assignment.csv
+                <input type="file" id="fileInput" accept=".csv">
+              </label>
+            </div>
+            <div id="statusLine" class="status-line">
+              No data loaded yet – use the demo or upload your AI-slotting file.
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-strip">
+          <div class="hero-step">
+            <span class="step-dot">1</span> AI Agent scores SKUs (0–100)
+          </div>
+          <div class="hero-step">
+            <span class="step-dot">2</span> Optimiser maps SKUs → Locations
+          </div>
+          <div class="hero-step">
+            <span class="step-dot">3</span> Dashboard explains impact for managers
+          </div>
+        </div>
+
+        <!-- Picture card -->
+        <div class="hero-visual">
+          <img src="https://images.pexels.com/photos/4484078/pexels-photo-4484078.jpeg?auto=compress&cs=tinysrgb&w=800"
+               alt="Warehouse shelves with boxes">
+          <div class="hero-visual-text">
+            <span>Visualising LWM:</span> High-velocity SKUs ideally sit at eye-level in Golden aisles,
+            reducing picker walk-time and fatigue.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS PANEL -->
+    <aside class="hero-side">
+      <div class="hero-side-inner">
+        <div class="hero-side-title">Auto Narrative</div>
+        <div class="hero-side-main">What is this scenario telling us?</div>
+        <ul id="insightsList" class="insights-list">
+          <li>Load a scenario to generate key insights automatically.</li>
+        </ul>
+        <div id="insightTag" class="insight-tag">
+          Waiting for data…
+        </div>
+        <div class="hero-side-footer">
+          Use these bullet points directly in your viva or report under “Results & Managerial Implications”.
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- KPI CARDS -->
+  <section class="grid-kpi">
+    <article class="card">
+      <div class="card-label">Network Coverage</div>
+      <div class="card-value" id="kpiTotalSkus">–</div>
+      <div class="card-sub">
+        Assigned: <span id="kpiAssigned">–</span> · Unassigned: <span id="kpiUnassigned">–</span>
+      </div>
+      <div class="card-badge" id="kpiCoverageNote">Load a scenario to see slotting coverage.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-label">Golden Zone for Critical SKUs</div>
+      <div class="card-value" id="kpiGoldenPct">–</div>
+      <div class="card-sub">High-priority SKUs placed in Golden Zone.</div>
+      <div class="card-badge" id="kpiGoldenNote">This directly reflects how well we are using premium pick-faces.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-label">Priority & Ergonomics</div>
+      <div class="card-value" id="kpiAvgPriority">–</div>
+      <div class="card-sub">
+        Avg AI priority · Avg level (high-priority SKUs): <span id="kpiAvgLevel">–</span>
+      </div>
+      <div class="card-badge" id="kpiLevelNote">Lower levels for critical SKUs = less bending, faster picks.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-label">Zone Utilisation Mix</div>
+      <div class="card-value" id="kpiZoneMix">–</div>
+      <div class="card-sub">
+        <span class="dot dot-golden"></span> Golden ·
+        <span class="dot dot-standard"></span> Standard ·
+        <span class="dot dot-overflow"></span> Overflow
+      </div>
+      <div class="card-badge" id="kpiZoneNote">Helps assess whether Golden space is over / under used.</div>
+    </article>
+  </section>
+
+  <!-- MAIN CHART GRID -->
+  <section class="grid-main">
+    <article class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title-text">Zone vs Priority Bands</div>
+          <div class="card-title-sub">Stacked distribution of High / Medium / Low AI-priority SKUs across zones.</div>
+        </div>
+        <span class="chip">Scenario View</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="zoneChart"></canvas>
+      </div>
+      <div class="footnote">
+        Priority bands are computed using quantiles of the AI priority score – top ~25% tagged as High, bottom as Low.
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title-text">Top AI-Priority SKUs</div>
+          <div class="card-title-sub">Which SKUs matter most, and where have they been placed?</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span>Show top</span>
+        <select id="topN">
+          <option value="5">5 SKUs</option>
+          <option value="10" selected>10 SKUs</option>
+          <option value="20">20 SKUs</option>
+        </select>
+        <button id="btnRefreshTop" class="btn-ghost">Refresh view</button>
+      </div>
+      <div class="chart-wrapper-sm">
+        <canvas id="topChart"></canvas>
+      </div>
+      <div class="footnote">
+        Bar colour encodes zone (Golden / Standard / Overflow). Explains whether the “crown jewels” are truly in Golden.
+      </div>
+    </article>
+  </section>
+
+  <!-- BOTTOM GRID -->
+  <section class="grid-bottom">
+    <article class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title-text">Warehouse Layout Map</div>
+          <div class="card-title-sub">Aisle vs Level – bubble radius ~ average AI priority, colour = zone.</div>
+        </div>
+        <span class="chip">Conceptual Visual</span>
+      </div>
+      <div class="chart-wrapper-sm">
+        <canvas id="mapChart"></canvas>
+      </div>
+      <div class="footnote">
+        This can be used in your viva to discuss congestion zones, ergonomic design, and re-slotting proposals.
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title-text">Slotting Snapshot (Sample)</div>
+          <div class="card-title-sub">View SKUs by zone and priority band – highlight potential misplacements.</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span>Zone:</span>
+        <select id="filterZone">
+          <option value="ALL">All</option>
+          <option value="Golden">Golden</option>
+          <option value="Standard">Standard</option>
+          <option value="Overflow">Overflow</option>
+        </select>
+        <span>Priority band:</span>
+        <select id="filterBand">
+          <option value="ALL">All</option>
+          <option value="HIGH">High</option>
+          <option value="MED">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+      </div>
+      <div class="table-container">
+        <table id="skuTable">
+          <thead>
+            <tr>
+              <th>SKU_ID</th>
+              <th>AI Priority</th>
+              <th>Band</th>
+              <th>Zone</th>
+              <th>Aisle</th>
+              <th>Rack</th>
+              <th>Level</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="footnote">
+        Rows highlighted where a HIGH-priority SKU is not stored in Golden – easy talking point for improvement.
+      </div>
+    </article>
+  </section>
+
+  <!-- RADAR / SPIDER CHART -->
+  <section class="radar-section">
+    <article class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title-text">Performance Radar – AI Slotting Health</div>
+          <div class="card-title-sub">
+            Spider view across five dimensions: coverage, Golden usage, ergonomics, Golden share, and overflow pressure.
+          </div>
+        </div>
+        <span class="chip">Spider Chart</span>
+      </div>
+      <div class="radar-wrapper">
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="footnote">
+        Higher values are better. Overflow pressure is inverted, so lower overflow allocations → higher radar score.
+      </div>
+    </article>
+  </section>
+</div>
+
+<script>
+  let scenarioData = [];
+  let zoneChart, topChart, mapChart, radarChart;
+
+  const statusEl = document.getElementById("statusLine");
+  const insightsList = document.getElementById("insightsList");
+  const insightTag = document.getElementById("insightTag");
+
+  function parseNumericLabel(label) {
+    if (!label) return null;
+    const m = String(label).match(/\d+/);
+    return m ? parseInt(m[0], 10) : null;
+  }
+
+  function computeBands(data) {
+    const scores = data
+      .map(d => d.Priority_Score)
+      .filter(x => x != null && !isNaN(x))
+      .sort((a, b) => a - b);
+
+    if (!scores.length) {
+      return { high: 75, med: 40 };
+    }
+    const q75 = scores[Math.floor(0.75 * (scores.length - 1))];
+    const q40 = scores[Math.floor(0.40 * (scores.length - 1))];
+    return { high: q75, med: q40 };
+  }
+
+  function bandFromScore(score, bands) {
+    if (score == null || isNaN(score)) return "LOW";
+    if (score >= bands.high) return "HIGH";
+    if (score >= bands.med) return "MED";
+    return "LOW";
+  }
+
+  function loadDemoScenario() {
+    const demo = [
+      { SKU_ID: "S0001", Zone: "Golden",  Aisle: "A1", Rack: "R1", Level: 2, Priority_Score: 95 },
+      { SKU_ID: "S0002", Zone: "Golden",  Aisle: "A1", Rack: "R1", Level: 1, Priority_Score: 92 },
+      { SKU_ID: "S0003", Zone: "Golden",  Aisle: "A2", Rack: "R1", Level: 3, Priority_Score: 88 },
+      { SKU_ID: "S0004", Zone: "Standard",Aisle: "A4", Rack: "R2", Level: 3, Priority_Score: 70 },
+      { SKU_ID: "S0005", Zone: "Standard",Aisle: "A5", Rack: "R2", Level: 4, Priority_Score: 62 },
+      { SKU_ID: "S0006", Zone: "Overflow",Aisle: "A7", Rack: "R3", Level: 5, Priority_Score: 28 },
+      { SKU_ID: "S0007", Zone: "Overflow",Aisle: "A8", Rack: "R4", Level: 5, Priority_Score: 18 },
+      { SKU_ID: "S0008", Zone: "Standard",Aisle: "A3", Rack: "R3", Level: 2, Priority_Score: 48 },
+      { SKU_ID: "S0009", Zone: "Golden",  Aisle: "A2", Rack: "R1", Level: 2, Priority_Score: 90 },
+      { SKU_ID: "S0010", Zone: "Standard",Aisle: "A5", Rack: "R2", Level: 3, Priority_Score: 56 }
+    ];
+    processScenario(demo, true);
+    statusEl.textContent = "Demo scenario loaded. Upload your real sku_slot_assignment.csv when ready.";
+  }
+
+  document.getElementById("btnDemo").addEventListener("click", loadDemoScenario);
+
+  document.getElementById("fileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    Papa.parse(file, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rows = results.data.map(r => ({
+          SKU_ID: String(r.SKU_ID || "").trim(),
+          Zone: r.Zone || null,
+          Aisle: r.Aisle || null,
+          Rack: r.Rack || null,
+          Level: r.Level != null ? Number(r.Level) : null,
+          Priority_Score: r.Priority_Score != null ? Number(r.Priority_Score) : null
+        }));
+        processScenario(rows, false);
+        statusEl.textContent = "File loaded successfully – dashboard reflects your AI slotting scenario.";
+      }
+    });
+  });
+
+  function processScenario(rows, isDemo) {
+    if (!rows || !rows.length) return;
+
+    const bands = computeBands(rows);
+    scenarioData = rows.map(r => ({
+      ...r,
+      AisleNum: parseNumericLabel(r.Aisle),
+      PriorityBand: bandFromScore(r.Priority_Score, bands)
+    }));
+
+    computeKpis(scenarioData);
+    renderZoneChart(scenarioData);
+    renderTopChart(scenarioData);
+    renderMapChart(scenarioData);
+    renderTable(scenarioData);
+    renderRadarChart(scenarioData);
+    renderInsights(scenarioData, isDemo);
+  }
+
+  function computeKpis(data) {
+    const total = data.length;
+    const assigned = data.filter(d => d.Zone && d.Zone !== "null" && d.Zone !== "None");
+    const unassigned = total - assigned.length;
+
+    document.getElementById("kpiTotalSkus").textContent = total || "–";
+    document.getElementById("kpiAssigned").textContent = assigned.length;
+    document.getElementById("kpiUnassigned").textContent = unassigned;
+
+    const coverage = total ? (assigned.length / total) * 100 : 0;
+    const covNote = document.getElementById("kpiCoverageNote");
+    covNote.textContent = `Slotting coverage: ${coverage.toFixed(1)}% of SKUs have a defined location.`;
+    covNote.classList.toggle("bad", coverage < 70);
+
+    const bands = { HIGH: [], MED: [], LOW: [] };
+    data.forEach(d => { bands[d.PriorityBand]?.push(d); });
+
+    const high = bands.HIGH;
+    const highInGolden = high.filter(d => d.Zone === "Golden");
+    const highGoldenPct = high.length ? (highInGolden.length / high.length) * 100 : 0;
+    document.getElementById("kpiGoldenPct").textContent = highGoldenPct ? highGoldenPct.toFixed(1) + "%" : "–";
+
+    const goldenNote = document.getElementById("kpiGoldenNote");
+    goldenNote.classList.remove("bad");
+    if (!high.length) {
+      goldenNote.textContent = "No clear high-priority SKUs detected in this scenario.";
+    } else if (highGoldenPct >= 70) {
+      goldenNote.textContent = "Strong design: majority of critical SKUs occupy Golden Zone slots.";
+    } else if (highGoldenPct >= 40) {
+      goldenNote.textContent = "Mixed allocation: some critical SKUs are still outside Golden Zone.";
+      goldenNote.classList.add("bad");
+    } else {
+      goldenNote.textContent = "Weak alignment: large share of critical SKUs is not in Golden Zone.";
+      goldenNote.classList.add("bad");
+    }
+
+    const avgPriority = data.reduce((s, d) => s + (d.Priority_Score || 0), 0) / (data.length || 1);
+    document.getElementById("kpiAvgPriority").textContent = avgPriority ? avgPriority.toFixed(1) : "–";
+
+    const highWithLevel = high.filter(d => d.Level != null);
+    const avgLevel = highWithLevel.reduce((s, d) => s + d.Level, 0) / (highWithLevel.length || 1);
+    document.getElementById("kpiAvgLevel").textContent = highWithLevel.length ? avgLevel.toFixed(2) : "–";
+
+    const levelNote = document.getElementById("kpiLevelNote");
+    levelNote.classList.remove("bad");
+    if (!highWithLevel.length) {
+      levelNote.textContent = "No level information available for high-priority SKUs.";
+    } else if (avgLevel <= 3) {
+      levelNote.textContent = "Good ergonomics: most critical SKUs are within ergonomic pick levels (≤ level 3).";
+    } else {
+      levelNote.textContent = "Ergonomics gap: critical SKUs tend to sit on higher levels, raising pick effort.";
+      levelNote.classList.add("bad");
+    }
+
+    const zoneCounts = { Golden: 0, Standard: 0, Overflow: 0 };
+    data.forEach(d => {
+      if (zoneCounts.hasOwnProperty(d.Zone)) {
+        zoneCounts[d.Zone]++;
+      }
+    });
+    const zTotal = zoneCounts.Golden + zoneCounts.Standard + zoneCounts.Overflow;
+    const mixEl = document.getElementById("kpiZoneMix");
+    if (!zTotal) {
+      mixEl.textContent = "–";
+    } else {
+      mixEl.textContent =
+        `G: ${(zoneCounts.Golden / zTotal * 100).toFixed(0)}% · ` +
+        `S: ${(zoneCounts.Standard / zTotal * 100).toFixed(0)}% · ` +
+        `O: ${(zoneCounts.Overflow / zTotal * 100).toFixed(0)}%`;
+    }
+  }
+
+  function renderZoneChart(data) {
+    const ctx = document.getElementById("zoneChart").getContext("2d");
+    if (zoneChart) zoneChart.destroy();
+
+    const zones = ["Golden", "Standard", "Overflow"];
+
+    const counts = {};
+    zones.forEach(z => {
+      counts[z] = { HIGH: 0, MED: 0, LOW: 0 };
+    });
+
+    data.forEach(d => {
+      if (!counts[d.Zone]) return;
+      counts[d.Zone][d.PriorityBand] = (counts[d.Zone][d.PriorityBand] || 0) + 1;
+    });
+
+    zoneChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: zones,
+        datasets: [
+          {
+            label: "High priority",
+            data: zones.map(z => counts[z].HIGH),
+            backgroundColor: "rgba(34, 197, 94, 0.9)"
+          },
+          {
+            label: "Medium priority",
+            data: zones.map(z => counts[z].MED),
+            backgroundColor: "rgba(234, 179, 8, 0.9)"
+          },
+          {
+            label: "Low priority",
+            data: zones.map(z => counts[z].LOW),
+            backgroundColor: "rgba(148, 163, 184, 0.95)"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: true,
+            ticks: { color: "#9ca3af", font: { size: 11 } },
+            grid: { display: false }
+          },
+          y: {
+            stacked: true,
+            ticks: { color: "#6b7280", font: { size: 11 } },
+            grid: { color: "rgba(31, 41, 55, 1)" }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: "#e5e7eb",
+              font: { size: 11 }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTopChart(data) {
+    const ctx = document.getElementById("topChart").getContext("2d");
+    if (topChart) topChart.destroy();
+
+    const topN = parseInt(document.getElementById("topN").value, 10);
+    const sorted = [...data]
+      .filter(d => d.Priority_Score != null && !isNaN(d.Priority_Score))
+      .sort((a, b) => b.Priority_Score - a.Priority_Score)
+      .slice(0, topN);
+
+    const labels = sorted.map(d => d.SKU_ID);
+    const values = sorted.map(d => d.Priority_Score);
+    const colors = sorted.map(d => {
+      if (d.Zone === "Golden") return "rgba(250, 204, 21, 0.95)";
+      if (d.Zone === "Standard") return "rgba(56, 189, 248, 0.96)";
+      if (d.Zone === "Overflow") return "rgba(148, 163, 184, 0.96)";
+      return "rgba(75, 85, 99, 0.96)";
+    });
+
+    topChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "AI Priority (0–100)",
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#9ca3af", font: { size: 10 } },
+            grid: { color: "rgba(15, 23, 42, 1)" },
+            max: 100
+          },
+          y: {
+            ticks: { color: "#e5e7eb", font: { size: 10 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  document.getElementById("btnRefreshTop").addEventListener("click", () => {
+    if (scenarioData && scenarioData.length) renderTopChart(scenarioData);
+  });
+
+  function renderMapChart(data) {
+    const ctx = document.getElementById("mapChart").getContext("2d");
+    if (mapChart) mapChart.destroy();
+
+    const agg = {};
+    data.forEach(d => {
+      if (d.AisleNum == null || d.Level == null) return;
+      const key = `${d.AisleNum}_${d.Level}_${d.Zone || "Unknown"}`;
+      if (!agg[key]) {
+        agg[key] = {
+          aisle: d.AisleNum,
+          level: d.Level,
+          zone: d.Zone || "Unknown",
+          total: 0,
+          count: 0
+        };
+      }
+      agg[key].total += (d.Priority_Score || 0);
+      agg[key].count += 1;
+    });
+
+    const golden = [], standard = [], overflow = [];
+    Object.values(agg).forEach(p => {
+      const avg = p.total / (p.count || 1);
+      const r = Math.min(12, 4 + avg / 12);
+      const point = { x: p.aisle, y: p.level, r: r };
+      if (p.zone === "Golden") golden.push(point);
+      else if (p.zone === "Standard") standard.push(point);
+      else if (p.zone === "Overflow") overflow.push(point);
+    });
+
+    mapChart = new Chart(ctx, {
+      type: "bubble",
+      data: {
+        datasets: [
+          { label: "Golden", data: golden, backgroundColor: "rgba(250, 204, 21, 0.95)" },
+          { label: "Standard", data: standard, backgroundColor: "rgba(56, 189, 248, 0.95)" },
+          { label: "Overflow", data: overflow, backgroundColor: "rgba(148, 163, 184, 0.95)" }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: "Aisle", color: "#9ca3af" },
+            ticks: { color: "#9ca3af", font: { size: 10 } },
+            grid: { color: "rgba(15, 23, 42, 1)" }
+          },
+          y: {
+            title: { display: true, text: "Level", color: "#9ca3af" },
+            ticks: { color: "#9ca3af", font: { size: 10 } },
+            grid: { color: "rgba(15, 23, 42, 1)" },
+            reverse: true
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: "#e5e7eb", font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTable(data) {
+    const tbody = document.querySelector("#skuTable tbody");
+    tbody.innerHTML = "";
+
+    const zoneFilter = document.getElementById("filterZone").value;
+    const bandFilter = document.getElementById("filterBand").value;
+
+    const filtered = data.filter(d => {
+      let ok = true;
+      if (zoneFilter !== "ALL") ok = ok && d.Zone === zoneFilter;
+      if (bandFilter !== "ALL") ok = ok && d.PriorityBand === bandFilter;
+      return ok;
+    }).slice(0, 80);
+
+    filtered.forEach(d => {
+      const tr = document.createElement("tr");
+      if (d.PriorityBand === "HIGH" && d.Zone !== "Golden") {
+        tr.classList.add("highlight");
+      }
+
+      function cell(text) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        return td;
+      }
+
+      tr.appendChild(cell(d.SKU_ID || "-"));
+      tr.appendChild(cell(d.Priority_Score != null ? d.Priority_Score.toFixed(1) : "-"));
+
+      const tdBand = document.createElement("td");
+      const span = document.createElement("span");
+      span.textContent = d.PriorityBand;
+      span.classList.add("tag");
+      if (d.PriorityBand === "HIGH") span.classList.add("tag-high");
+      else if (d.PriorityBand === "MED") span.classList.add("tag-med");
+      else span.classList.add("tag-low");
+      tdBand.appendChild(span);
+      tr.appendChild(tdBand);
+
+      tr.appendChild(cell(d.Zone || "-"));
+      tr.appendChild(cell(d.Aisle || "-"));
+      tr.appendChild(cell(d.Rack || "-"));
+      tr.appendChild(cell(d.Level != null ? d.Level : "-"));
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("filterZone").addEventListener("change", () => {
+    if (scenarioData && scenarioData.length) renderTable(scenarioData);
+  });
+  document.getElementById("filterBand").addEventListener("change", () => {
+    if (scenarioData && scenarioData.length) renderTable(scenarioData);
+  });
+
+  function renderRadarChart(data) {
+    const ctx = document.getElementById("radarChart").getContext("2d");
+    if (radarChart) radarChart.destroy();
+
+    const total = data.length;
+    const assigned = data.filter(d => d.Zone && d.Zone !== "null" && d.Zone !== "None");
+    const coverage = total ? (assigned.length / total) * 100 : 0;
+
+    const high = data.filter(d => d.PriorityBand === "HIGH");
+    const highInGolden = high.filter(d => d.Zone === "Golden");
+    const highGoldenPct = high.length ? (highInGolden.length / high.length) * 100 : 0;
+
+    const highWithLevel = high.filter(d => d.Level != null);
+    const avgLevel = highWithLevel.reduce((s, d) => s + d.Level, 0) / (highWithLevel.length || 1);
+    let ergonomicsScore = 50;
+    if (highWithLevel.length) {
+      // Assuming levels 1–5, best ergonomics if avg level ~1
+      const minLevel = 1, maxLevel = 5;
+      const norm = Math.max(minLevel, Math.min(maxLevel, avgLevel));
+      ergonomicsScore = (1 - (norm - minLevel) / (maxLevel - minLevel)) * 100;
+    }
+
+    const zoneCounts = { Golden: 0, Standard: 0, Overflow: 0 };
+    data.forEach(d => {
+      if (zoneCounts.hasOwnProperty(d.Zone)) {
+        zoneCounts[d.Zone]++;
+      }
+    });
+    const zTotal = zoneCounts.Golden + zoneCounts.Standard + zoneCounts.Overflow;
+    const goldenShare = zTotal ? (zoneCounts.Golden / zTotal) * 100 : 0;
+    const overflowShare = zTotal ? (zoneCounts.Overflow / zTotal) * 100 : 0;
+    const overflowPressure = 100 - overflowShare;
+
+    const labels = [
+      "Coverage",
+      "High in Golden",
+      "Ergonomics",
+      "Golden Usage",
+      "Overflow Pressure"
+    ];
+    const values = [
+      coverage,
+      highGoldenPct,
+      ergonomicsScore,
+      goldenShare,
+      overflowPressure
+    ];
+
+    radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels,
+        datasets: [{
+          label: "AI Slotting Health",
+          data: values,
+          backgroundColor: "rgba(56, 189, 248, 0.18)",
+          borderColor: "rgba(56, 189, 248, 0.9)",
+          borderWidth: 2,
+          pointBackgroundColor: "#e5e7eb",
+          pointRadius: 3.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            angleLines: { color: "rgba(55, 65, 81, 0.9)" },
+            grid: { color: "rgba(31, 41, 55, 0.9)" },
+            suggestedMin: 0,
+            suggestedMax: 100,
+            ticks: {
+              display: true,
+              color: "#6b7280",
+              showLabelBackdrop: false,
+              stepSize: 20,
+              font: { size: 9 }
+            },
+            pointLabels: {
+              color: "#e5e7eb",
+              font: { size: 10 }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: "#e5e7eb", font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  function renderInsights(data, isDemo) {
+    insightsList.innerHTML = "";
+
+    const total = data.length;
+    const assigned = data.filter(d => d.Zone && d.Zone !== "null" && d.Zone !== "None");
+    const coverage = total ? (assigned.length / total) * 100 : 0;
+
+    const high = data.filter(d => d.PriorityBand === "HIGH");
+    const highInGolden = high.filter(d => d.Zone === "Golden");
+    const highGoldenPct = high.length ? (highInGolden.length / high.length) * 100 : 0;
+
+    const avgPriority = data.reduce((s, d) => s + (d.Priority_Score || 0), 0) / (data.length || 1);
+    const highWithLevel = high.filter(d => d.Level != null);
+    const avgLevel = highWithLevel.reduce((s, d) => s + d.Level, 0) / (highWithLevel.length || 1);
+
+    const goldenCount = data.filter(d => d.Zone === "Golden").length;
+    const stdCount = data.filter(d => d.Zone === "Standard").length;
+    const ovCount = data.filter(d => d.Zone === "Overflow").length;
+    const zTotal = goldenCount + stdCount + ovCount;
+
+    const li1 = document.createElement("li");
+    li1.textContent =
+      `Slotting coverage of ${coverage.toFixed(1)}% indicates ` +
+      (coverage >= 90 ? "a largely complete slotting design for this scenario." :
+       coverage >= 70 ? "reasonable coverage with some residual unassigned SKUs." :
+       "significant room for improvement in defining locations for all SKUs.");
+    insightsList.appendChild(li1);
+
+    const li2 = document.createElement("li");
+    if (!high.length) {
+      li2.textContent = "The data does not clearly separate a high-priority band, so Golden Zone recommendations are weaker.";
+    } else {
+      li2.textContent =
+        `${highGoldenPct.toFixed(1)}% of high-priority SKUs are in Golden Zone, ` +
+        (highGoldenPct >= 70 ? "which reflects strong alignment between AI priority and physical slotting." :
+         highGoldenPct >= 40 ? "which is acceptable, but several critical SKUs still sit outside premium locations." :
+         "which is low, suggesting that AI recommendations are not fully translated into slotting decisions.");
+    }
+    insightsList.appendChild(li2);
+
+    const li3 = document.createElement("li");
+    if (!highWithLevel.length) {
+      li3.textContent = "Ergonomics for critical SKUs cannot be evaluated, as level data is missing for the high-priority band.";
+    } else {
+      li3.textContent =
+        `Critical SKUs sit at an average level of ${avgLevel.toFixed(2)}, ` +
+        (avgLevel <= 3 ? "indicating ergonomically favourable picks (mostly within lower and mid levels)." :
+         "indicating that pickers may be forced to reach higher levels for important SKUs, raising effort and risk.");
+    }
+    insightsList.appendChild(li3);
+
+    const li4 = document.createElement("li");
+    if (zTotal) {
+      li4.textContent =
+        `Zone utilisation is roughly Golden ${((goldenCount/zTotal)*100).toFixed(0)}%, ` +
+        `Standard ${((stdCount/zTotal)*100).toFixed(0)}%, Overflow ${((ovCount/zTotal)*100).toFixed(0)}%. ` +
+        "This split can be used to argue whether Golden Zone is being overused for non-critical SKUs.";
+    } else {
+      li4.textContent = "Zone-level utilisation cannot be inferred as most SKUs have no defined zone.";
+    }
+    insightsList.appendChild(li4);
+
+    insightTag.textContent = isDemo
+      ? "Demo scenario loaded – use this narrative structure for your real data."
+      : "Real AI scenario – narrative auto-generated from your slotting file.";
+  }
+</script>
+</body>
+</html>
